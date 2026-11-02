@@ -144,33 +144,7 @@ Solving for the uncertainty radius $\Delta_i(t)$:
 
 $$-2 N_i(t) \Delta_i(t)^2 = -3 \ln(t) \implies \Delta_i(t) = \sqrt{\frac{3 \ln(t)}{2 N_i(t)}}$$
 
-#### 2. The UCB1 Decision Rule
-At each impression round $t$, the Growkaro engine computes the **Upper Confidence Bound** for every ad $i$:
 
-$$\text{UCB}_i(t) = \underbrace{\frac{R_i(t)}{N_i(t)}}_{\text{Exploitation Term (Empirical CTR)}} + \underbrace{\sqrt{\frac{3 \ln(t)}{2 N_i(t)}}}_{\text{Exploration Term (Confidence Radius)}}$$
-
-The agent deterministically serves the ad with the maximal upper bound:
-
-$$a^*(t) = \arg\max_{i \in \{1, \dots, K\}} \left[ \hat{\mu}_i(t) + \sqrt{\frac{3 \ln(t)}{2 N_i(t)}} \right]$$
-
-```
-Upper Confidence Bound Anatomy:
-┌────────────────────────────────────────────────────────────────────────┐
-│                                                                        │
-│   UCB_i(t)  =      μ̂_i(t)           +        Δ_i(t)                    │
-│                                                                        │
-│                [ EXPLOITATION ]             [ EXPLORATION ]            │
-│             Current Estimated CTR         Uncertainty Radius           │
-│                                                                        │
-│                   R_i(t)                       3 ln(t)                 │
-│                 ──────────          +       ─────────────              │
-│                   N_i(t)                      2 N_i(t)                 │
-│                                                                        │
-│             High CTR pulls                 Fewer impressions (N_i)     │
-│             score UP                       or higher total rounds (t)  │
-│                                            pulls score UP              │
-└────────────────────────────────────────────────────────────────────────┘
-```
 
 #### 3. Regret Minimization
 The **Cumulative Pseudo-Regret** $\mathcal{R}(T)$ measures the expected loss from not pulling the optimal arm at every single round:
