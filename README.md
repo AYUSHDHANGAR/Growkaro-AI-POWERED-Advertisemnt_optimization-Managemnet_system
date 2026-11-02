@@ -410,60 +410,7 @@ flowchart TD
   - **Pytest** test suite with smoke, auth, and algorithmic convergence testing
   - **GitHub Actions** CI/CD pipeline automation
 
----
 
-## 💻 Code Deep Dive: The UCB1 Implementation
-
-The core mathematical engine is contained in [`backend/app/ml_models/ucb.py`](file:///c:/Users/user/OneDrive/Desktop/25_WebAdOptimization_UpperConfidenceBound_ReinforcementLearning/backend/app/ml_models/ucb.py):
-
-```python
-import math
-import numpy as np
-from app.ml_models.base_model import BanditModel
-
-class UCBModel(BanditModel):
-    algorithm_name = "ucb"
-
-    def select_ad(self, round_index: int, selections: np.ndarray, rewards_by_ad: np.ndarray) -> int:
-        # Phase 1: Cold Start Initialization
-        # If any ad has never been shown (selections == 0), explore it immediately
-        unselected = np.where(selections == 0)[0]
-        if len(unselected) > 0:
-            return int(unselected[0])
-
-        # Phase 2: Optimism in the Face of Uncertainty
-        upper_bounds = []
-        for ad_index in range(len(selections)):
-            # 1. Exploitation: Empirical Mean Reward (CTR)
-            average_reward = rewards_by_ad[ad_index] / selections[ad_index]
-            
-            # 2. Exploration: Confidence radius derived from Hoeffding's Inequality
-            delta_i = math.sqrt((3 / 2) * math.log(round_index + 1) / selections[ad_index])
-            
-            # 3. Upper Confidence Bound
-            upper_bounds.append(average_reward + delta_i)
-
-        # Phase 3: Action Selection
-        return int(np.argmax(upper_bounds))
-```
-
-### Real-Time Convergence Detection
-
-In [`backend/app/ml_models/base_model.py`](file:///c:/Users/user/OneDrive/Desktop/25_WebAdOptimization_UpperConfidenceBound_ReinforcementLearning/backend/app/ml_models/base_model.py#L149-L159), Growkaro automatically monitors running campaigns for statistical stability:
-
-```python
-def _detect_convergence(self, selected_ads: list[int], best_index: int) -> int | None:
-    window = min(250, max(20, len(selected_ads) // 20))
-    if len(selected_ads) < window:
-        return None
-    for index in range(window, len(selected_ads) + 1):
-        window_ads = selected_ads[index - window : index]
-        best_share = window_ads.count(best_index) / window
-        # When winning ad secures >= 80% of rolling window allocations
-        if best_share >= 0.8:
-            return index
-    return None
-```
 
 ---
 
@@ -536,73 +483,17 @@ git clone https://github.com/AYUSHDHANGAR/Growkaro.git
 cd Growkaro
 ```
 
-#### 2. Backend Setup
-```bash
-# Navigate to backend directory
-cd backend
-
-# Create and activate virtual environment
-python -m venv .venv
-
-# On Windows (PowerShell):
-.venv\Scripts\Activate.ps1
-# On Linux/macOS:
-# source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run database setup and launch backend server
-uvicorn app.main:app --reload --port 8000
-```
 The FastAPI interactive documentation will be live at: **http://localhost:8000/docs**
 
-#### 3. Frontend Setup
-In a separate terminal window:
-```bash
-cd frontend
 
-# Install Node modules
-npm install
 
-# Start the development server
-npm run dev
-```
-The Growkaro interface will be live at: **http://localhost:3000**
-
----
-
-### Method 2: Docker Compose (One-Click Launch)
-
-Run the entire full-stack application (frontend + backend + SQLite persistence) with a single command:
-
-```bash
-docker compose up --build
-```
 
 - **Web Dashboard**: `http://localhost:3000`
 - **API Documentation**: `http://localhost:8000/docs`
 
 ---
 
-### 🧪 Running Automated Tests
 
-Growkaro comes with an automated Pytest suite covering algorithm correctness, convergence verification, authentication, dataset uploads, and model execution:
-
-```bash
-# From the project root (using backend venv)
-backend\.venv\Scripts\pytest backend\tests -v
-```
-
-Expected output:
-```text
-backend/tests/test_api_smoke.py::test_auth_upload_and_training_flow PASSED
-backend/tests/test_ucb.py::test_ucb_prefers_best_ad PASSED
-backend/tests/test_ucb.py::test_ucb_all_zeroes PASSED
-======================== 3 passed in 6.98s ========================
-```
-
----
 
 ## 🔑 Demo & Admin Credentials
 
